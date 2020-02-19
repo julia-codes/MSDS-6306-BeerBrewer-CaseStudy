@@ -1,0 +1,241 @@
+---
+title: "Case Study 1"
+author: "jeysenbach"
+date: "2/17/2020"
+output: html_document
+---
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggthemes)
+library(caret)
+library(mvtnorm)
+library(class)
+library(e1071)
+
+#import data
+beers <- read_csv("Beers.csv")
+breweries <- read_csv("Breweries.csv")
+```
+
+1. How many breweries are present in each state?
+```{r}
+breweries %>% 
+  count(State,sort=TRUE)
+```
+
+2. Merge Beer and Brewery Data
+```{r}
+#Merge the datasets
+Beer2 <- merge(beers, breweries, by.x = "Brewery_id", by.y = "Brew_ID")
+#Rename the Beer and Brewery Columns
+Beer2 <- Beer2 %>%
+  rename(
+    Brewery_Name = Name.y,
+    Beer_Name = Name.x
+    )
+#Display the first and last 6 rows
+head(Beer2, 6)
+tail(Beer2, 6)
+```
+
+3. Address Missing Values
+```{r}
+#Find out which columns have missing values
+names(which(colSums(is.na(Beer2))>0))
+```
+```{r}
+#Count the missing values in each column
+sum(is.na(Beer2$ABV))
+sum(is.na(Beer2$IBU))
+sum(is.na(Beer2$Style))
+```
+
+There are a few ways we could go about dealing with these; the best way to glean reliable information from any statistics related to the data would be to ignore entries with missing values for the variable(s) being examined, as using any input (like say, a mean) in place of an unknown value is very likely to misrepresent the true nature of the data.
+
+In this case, IBU is a good example of the potential perils of trying to impute missing values because it varies greatly between beers regardless of style. The IBU measurement is going to be impacted heavily by the flavor/taste a brewer is going for, and breweries have little practical interest in producing beers that aren't distinguishably different than those they already have, especially if they will produce multiple iterations of a certain style. The best course of action is probably to exclude beers missing the IBU value when examining IBU despite the misfortune that this excludes over 1000 beers.
+
+For similar reasons, beers missing ABV should also be excluded from analyses involving ABV. There is less reason for concern with these exclusions due to the relatively small number of beers missing this information.
+
+4. Calculate Mean ABV and IBU for each state
+```{r}
+Meds <- Beer2 %>% 
+  group_by(State) %>% 
+  summarize(
+    Median_ABV = median(ABV, na.rm = TRUE), 
+    Median_IBU = median(IBU, na.rm = TRUE)
+  )
+Meds
+```
+
+Bar Charts of ABV and IBU
+```{r}
+Meds %>% ggplot(aes(x=reorder(State,Median_ABV), y=Median_ABV,fill = Meds$Median_ABV)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+
+Meds %>% ggplot(aes(x=reorder(State,Median_IBU), y=Median_IBU,fill = Meds$Median_IBU)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+```
+
+5. Find states with the highest ABV and IBU
+```{r}
+#States with the highest median ABV
+Meds$`State`[which(Meds$Median_ABV==max(Meds$Median_ABV, na.rm = TRUE))]
+
+#States with the highest median IBU
+Meds$`State`[which(Meds$Median_IBU==max(Meds$Median_IBU, na.rm = TRUE))]
+
+#State in which the beer with the single highest ABV resides
+Beer2$`State`[which(Beer2$ABV==max(Beer2$ABV, na.rm = TRUE))]
+
+#State in which the beer with the single highest IBU resides
+Beer2$`State`[which(Beer2$IBU==max(Beer2$IBU, na.rm = TRUE))]
+```
+
+6. Summary Statistics of ABV
+```{r}
+summary(Beer2$ABV)
+sd(Beer2$ABV, na.rm = TRUE) #Standard deviation
+
+hist(Beer2$ABV, breaks = 20, main = "Distribution of Alcohol Content", xlab = "Alcohol By Volume")
+```
+
+The distribution of ABV of all the beers in the dataset appears fairly normal to slightly right-skewed.The median ABV is about 5.6% and 75% of the data is contained within the range of 5% to 6.7% ABV, indicating that most beers tend to be close to the median ABV. The maximum ABV of 12.8% is a full five standard deviations from the mean of about 6%, and the minimum ABV of 1% is over 4 standard deviations from the mean. Based this information and visual assessment of the histogram, beers with ABV this high or low appear to be rare outliers.
+
+
+7. Assess any relationship between ABV and IBU. Note: We are removing entries with missing values.
+```{r, warning=FALSE}
+#Scatter plot with linear model
+Beer2 %>% ggplot(aes(x=IBU, y=ABV, fill = ABV)) + scale_colour_gradient()+ geom_point() + geom_smooth(method = lm) + ggtitle("IBU vs ABV") + xlab("IBU") + ylab("ABV")
+
+#Scatter plot with quadratic model (*can probably remove this*)
+Beer2 %>% ggplot(aes(x=IBU, y=ABV, fill = ABV)) + scale_colour_gradient()+ geom_point() + geom_smooth(method = lm, formula = y ~ poly(x, 2)) + ggtitle("IBU vs ABV") + xlab("IBU") + ylab("ABV")
+
+#Correlation of IBU and ABV
+Beer3 <- Beer2 %>% filter(!is.na(Beer2$ABV))
+Beer3 <- Beer3 %>% filter(!is.na(Beer3$IBU))
+cor(x=Beer3$ABV, y=Beer3$IBU)
+```
+
+Based on a scatter plot of ABV vs IBU, there does appear to be evidence of a moderate positive correlation. The ABV looks like it trends upward as IBU increases. The calculated correlation coefficient of .67 supports this. 
+
+8. Use KNN to investigate the difference between IPA and other Ales. (Again NAs have been removed)
+
+***(First Try - KNN for classifying just IPAs and Non-IPA Ales; other styles are excluded)
+
+```{r}
+#Identify IPAs, Non-IPA Ales, or other styles.
+#All IPAs have "IPA" somehwere in the style name, so this can be used to identify IPA vs not IPA.
+
+Beer3$Category[grepl("IPA", Beer3$Style)] <- "IPA"
+Beer3$Category[is.na(Beer3$Category) & grepl("Ale", Beer3$Style)] <- "Non-IPA Ale"
+Beer3$Category[is.na(Beer3$Category)] <- "Other"
+
+Beer4 <- Beer3 %>% filter(Category == "IPA" | Category == "Non-IPA Ale")
+
+#Identify the best k
+#Set Split percentages for train and test sets
+set.seed(10)
+splitPerc = .5
+
+#loop through values of k to find best model on 100 generated train/test combos
+iterations = 50
+numks = 80
+
+masterAcc = matrix(nrow = iterations, ncol = numks)
+  
+for(j in 1:iterations)
+{
+accs = data.frame(accuracy = numeric(80), k = numeric(80))
+trainIndices = sample(1:dim(Beer4)[1],round(splitPerc * dim(Beer4)[1]))
+train = Beer4[trainIndices,]
+test = Beer4[-trainIndices,]
+for(i in 1:numks)
+{
+  classifications = knn(train[,c(4,5)],test[,c(4,5)],train$Category, prob = TRUE, k = i)
+  table(classifications,test$Category)
+  CM = confusionMatrix(table(classifications,test$Category))
+  masterAcc[j,i] = CM$overall[1]
+}
+
+}
+
+MeanAcc = colMeans(masterAcc)
+#plot k vs accuracy and identify k with highest accuracy
+plot(seq(1,numks,1),MeanAcc, type = "l")
+which.max(MeanAcc)
+```
+
+```{r}
+#knn classification using the tuned value of k
+set.seed(10)
+trainIndices = sample(seq(1:length(Beer4$ABV)),round(.7*length(Beer4$ABV)))
+trainBeer = Beer4[trainIndices,]
+testBeer = Beer4[-trainIndices,]
+classif <- knn(trainBeer[,4:5],testBeer[,4:5],trainBeer$Category, prob=TRUE, k=5)
+
+confusionMatrix(table(classif,testBeer$Category))
+```
+Using a KNN model with k=5, we could categorize beers into IPAs or Non-IPA Ales with about 87% accuracy using only IBU and ABV. This indicates that on average, there is a clear enough distinction between IPAs and other Ales in their combination of ABV and IBU to be able to reasonably identify an IPA from a different Ale based on these variables alone.
+
+
+
+
+***(Second Try - run KNN to categorize THREE groups - IPA, Non-IPA Ales, Other Styles)
+
+```{r}
+#Identify IPAs, Non-IPA Ales, or other styles.
+#All IPAs have "IPA" somehwere in the style name, so this can be used to identify IPA vs not IPA.
+
+Beer3$Category[grepl("IPA", Beer3$Style)] <- "IPA"
+Beer3$Category[is.na(Beer3$Category) & grepl("Ale", Beer3$Style)] <- "Non-IPA Ale"
+Beer3$Category[is.na(Beer3$Category)] <- "Other"
+
+#Identify the best k
+#Set Split percentages for train and test sets
+set.seed(1234)
+splitPerc = .7
+
+#loop through values of k to find best model on 100 generated train/test combos
+iterations = 100
+numks = 80
+
+masterAcc = matrix(nrow = iterations, ncol = numks)
+  
+for(j in 1:iterations)
+{
+accs = data.frame(accuracy = numeric(80), k = numeric(80))
+trainIndices = sample(1:dim(Beer3)[1],round(splitPerc * dim(Beer3)[1]))
+train = Beer3[trainIndices,]
+test = Beer3[-trainIndices,]
+for(i in 1:numks)
+{
+  classifications = knn(train[,c(4,5)],test[,c(4,5)],train$Category, prob = TRUE, k = i)
+  table(classifications,test$Category)
+  CM = confusionMatrix(table(classifications,test$Category))
+  masterAcc[j,i] = CM$overall[1]
+}
+
+}
+
+MeanAcc = colMeans(masterAcc)
+#plot k vs accuracy and identify k with highest accuracy
+plot(seq(1,numks,1),MeanAcc, type = "l")
+which.max(MeanAcc)
+```
+
+```{r}
+#knn classification using the tuned value of k
+set.seed(1234)
+trainIndices = sample(seq(1:length(Beer3$ABV)),round(.7*length(Beer3$ABV)))
+trainBeer = Beer3[trainIndices,]
+testBeer = Beer3[-trainIndices,]
+classif <- knn(trainBeer[,4:5],testBeer[,4:5],trainBeer$Category, prob=TRUE, k=36)
+
+confusionMatrix(table(classif,testBeer$Category))
+```
+
+Using a KNN model with k=36, we could categorize beers into IPAs, Non-IPA Ales, or other types with about 62% accuracy using only IBU and ABV. This indicates that although the two variables used are not excellent predictors, there is some distinctintion between IPAs, other Ales, and other styles in their combination of ABV and IBU on average.
+
+
+
+
+

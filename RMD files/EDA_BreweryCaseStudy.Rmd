@@ -8,8 +8,13 @@ output: html_document
 ## Intro
 The introduction needs to be written as if you are presenting the work to the CEO and CFO of Budweiser (your client) and that they only have had one class in statistics.  If it sounds like a student presentation, that is not acceptable.  You may assume that the CEO and CFO gave you the data and gave you the directive to report any interesting finding that you may uncover through your analysis.
 
+
+
 ## Code Purpose
 b.	Briefly explain the purpose of the code. The explanations should appear as a sentence or two before or after the code chunk. Even though you will not be hiding the code chunks (so that I can see the code), you need to assume that the client can’t see them.
+
+We are making comparisons between 
+We have grouped the brewery and individual beer datasets to get and overall view of the
 
 ## Questions
 c.	Use R to code answers concerning the seven questions below.
@@ -66,6 +71,7 @@ tail(beer_by_brew)
 beer_by_brew_clean <- na.omit(beer_by_brew)
 summary(beer_by_brew_clean)
 brew_count_by_state <- beer_by_brew_clean %>% group_by(State) %>% tally()
+summ<-brew_count_by_state
 brew_count_by_state$state <- trimws(as.character(brew_count_by_state$State))
 brew_count_by_state$fips <- fips(brew_count_by_state$state)
 attach(brew_count_by_state)
@@ -82,29 +88,31 @@ detach(brew_count_by_state)
 medianABVs <- as.data.frame(beer_by_brew_clean %>% group_by(State) %>% summarise( MedianABV=median(ABV* 100), MeanABV=mean(ABV* 100), MaxABV=max(ABV* 100), MinABV=min(ABV* 100), StdABV=sd(ABV* 100)))
 medianIBUs <- as.data.frame(beer_by_brew_clean %>% group_by(State) %>% summarise( MedianIBU=median(IBU), MeanIBU=mean(IBU), MaxIBU=max(IBU), MinIBU=min(IBU), StdIBU=sd(IBU))) 
 
-medianABVIBU <- merge(medianABVs,medianIBUs,by="State")
-medianABVIBU$state <- trimws(as.character(medianABVIBU$State))
-medianABVIBU$fips <- fips(medianABVIBU$state)
-attach(medianABVIBU)
-medianABVIBU_fips <- medianABVIBU[order(fips),] 
-detach(medianABVIBU)
+summary_ABV_IBU <- merge(medianABVs,medianIBUs,by="State")
+summary_ABV_IBU$state <- trimws(as.character(summary_ABV_IBU$State))
+summary_ABV_IBU$fips <- fips(summary_ABV_IBU$state)
+attach(summary_ABV_IBU)
+summary_ABV_IBU_fips <- summary_ABV_IBU[order(fips),] 
+detach(summary_ABV_IBU)
 
-medianABVIBU_fips
+summary_ABV_IBU_fips
 
-plot_usmap(data = medianABVIBU_fips,  values = "MedianIBU", color = "blue") + 
+
+
+plot_usmap(data = summary_ABV_IBU_fips,  values = "MedianIBU", color = "blue") + 
     labs(title = "Median IBU by State", subtitle = "International Bitterness Units") + 
   scale_fill_continuous(low = "white", high = "blue", name = "IBU", label = scales::comma) + theme(legend.position = "right")
 
-plot_usmap(data = medianABVIBU_fips,  values = "MedianABV", color = "red") + 
+plot_usmap(data = summary_ABV_IBU_fips,  values = "MedianABV", color = "red") + 
     labs(title = "Median ABV by State", subtitle = "Alcohol by Volume") + 
   scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
 
-plot_usmap(include= c("OK", "TX", "CO", "NM"), data = medianABVIBU_fips,  values = "MedianABV", color = "red") + 
-    labs(title = "Median ABV by State", subtitle = "Alcohol by Volume") + 
+plot_usmap(include= c("OK", "TX", "CO", "NM", "AZ", "UT"), data = summary_ABV_IBU_fips,  values = "MedianABV", color = "red") + 
+    labs(title = "SOUTH WEST: Median ABV by State", subtitle = "Alcohol by Volume") + 
   scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
 
-plot_usmap(include= c("MN", "IA", "MO", "AR", "LA"), data = medianABVIBU_fips,  values = "MedianABV", color = "red") + 
-    labs(title = "Median ABV by State", subtitle = "Alcohol by Volume") + 
+plot_usmap(include= c("MN", "IA", "MO", "AR", "LA"), data = summary_ABV_IBU_fips,  values = "MedianABV", color = "red") + 
+    labs(title = "MIMAL: Median ABV by State", subtitle = "Alcohol by Volume") + 
   scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
 ```
 
@@ -112,30 +120,55 @@ plot_usmap(include= c("MN", "IA", "MO", "AR", "LA"), data = medianABVIBU_fips,  
 ### Highest ABV and IBU
 5.   Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
 ```{r}
-max_ABV <-medianABVIBU_fips[order(-medianABVIBU_fips$MaxABV),] 
+max_ABV <-summary_ABV_IBU_fips[order(-summary_ABV_IBU_fips$MaxABV),] 
 head(max_ABV, 1)
-max_IBU <- medianABVIBU_fips[order(-medianABVIBU_fips$MaxIBU),] 
+max_IBU <- summary_ABV_IBU_fips[order(-summary_ABV_IBU_fips$MaxIBU),] 
 head(max_IBU, 1)
 max_ABV
 includePrintABV = head(max_ABV, 5)$state
 includePrintIBU = head(max_IBU, 5)$state
 includePrintABV
 includePrintIBU
+par(mfrow=c(1,2))
+head(max_ABV, 5) %>% ggplot(aes(x = state, y = MaxABV, fill=state)) +  geom_histogram(stat = "identity", position = "dodge",  aes(x = state)) +
+  labs(title = "Top 5 ABV States", subtitle = "Highest Alcohol by Volume") 
 
-plot_usmap(include= includePrintABV, data = medianABVIBU_fips,  values = "MaxABV", color = "red") + 
-    labs(title = "Top 5 ABV States", subtitle = "Alcohol by Volume") + 
+head(max_IBU, 5) %>% ggplot(aes(x = state, y = MaxIBU, fill=state)) +  geom_histogram(stat = "identity", position = "dodge",  aes(x = state)) +
+  labs(title = "Top 5 IBU States", subtitle = "Highest International Bitterness Units")
+
+plot_usmap(include= includePrintABV, data = summary_ABV_IBU_fips,  values = "MaxABV", color = "red") + 
+    labs(title = "Top 5 ABV States", subtitle = "Mapping States with Highest Alcohol by Volume") + 
   scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
 
-plot_usmap(include= includePrintIBU, data = medianABVIBU_fips,  values = "MaxIBU", color = "red") + 
-    labs(title = "Top 5 IBU States", subtitle = "International Bitterness Units") + 
+plot_usmap(include= includePrintIBU, data = summary_ABV_IBU_fips,  values = "MaxIBU", color = "red") + 
+    labs(title = "Top 5 IBU States", subtitle = "Mapping States with Highest International Bitterness Units") + 
   scale_fill_continuous(low = "white", high = "red", name = "IBU", label = scales::comma) + theme(legend.position = "right")
 ```
 
 ### Summary Statistics
 6.   Comment on the summary statistics and distribution of the ABV variable.
+```{r}
+summary(summary_ABV_IBU_fips)
+
+beer_by_brew_clean %>% ggplot(aes(x = ABV, fill=State)) +  geom_histogram(stat = "count", position = "dodge",  aes(x = ABV)) +
+  labs(title = "ABV by State", subtitle = "ABV by state")
+```
 
 ### IBU and ABV Relationship
 7.   Is there an apparent relationship between the bitterness of the beer and its alcoholic content? Draw a scatter plot.  Make your best judgment of a relationship and EXPLAIN your answer.
+
+#### Comment
+There does appear to be an increase in bitterness when the Alchol volume goes up. 
+I don't see much difference in scaled/not
+```{r}
+beer_by_brew_clean
+beer_by_brew_clean$scaledABV <- scale(beer_by_brew_clean$ABV)
+beer_by_brew_clean$scaledIBU <- scale(beer_by_brew_clean$IBU)
+par(mfrow=c(1,2))
+beer_by_brew_clean %>% ggplot(aes(x = ABV, y = IBU)) + geom_point() + stat_smooth() + ggtitle("ABV vs IBU: Not Scaled")
+beer_by_brew_clean %>% ggplot(aes(x = scaledABV, y = scaledIBU)) + geom_point() + stat_smooth() + ggtitle("ABV vs IBU: Scaled")
+
+```
 
 ### IBU and ABV: IPA vs Ales
 8.  Budweiser would also like to investigate the difference with respect to IBU and ABV between IPAs (India Pale Ales) and other types of Ale (any beer with “Ale” in its name other than IPA).  You decide to use KNN classification to investigate this relationship.  Provide statistical evidence one way or the other. You can of course assume your audience is comfortable with percentages … KNN is very easy to understand conceptually.

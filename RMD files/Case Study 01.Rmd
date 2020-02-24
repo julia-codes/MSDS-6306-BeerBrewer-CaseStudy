@@ -86,10 +86,7 @@ Meds
 Meds$fips <- fips(trimws(as.character(Meds$State)))
 
 
-med_ABV <-Meds[order(-Meds$Median_ABV),] 
-med_ABV
-med_IBU <- Meds[order(-Meds$Median_IBU),] 
-med_IBU
+
 
 plot_usmap(data = Meds,  values = "Median_IBU", color = "blue") + 
     labs(title = "Median IBU by State", subtitle = "International Bitterness Units") + 
@@ -99,6 +96,10 @@ plot_usmap(data = Meds,  values = "Median_ABV", color = "red") +
     labs(title = "Median ABV by State", subtitle = "Alcohol by Volume") + 
   scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
 
+med_ABV <-Meds[order(-Meds$Median_ABV),] 
+med_ABV
+med_IBU <- Meds[order(-Meds$Median_IBU),] 
+med_IBU
 par(mfrow=c(1,2))
 head(med_ABV, 5) %>% ggplot(aes(x = reorder(State,Median_ABV), y = Median_ABV, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
 head(med_IBU, 5) %>% ggplot(aes(x = reorder(State,Median_IBU), y = Median_IBU, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))

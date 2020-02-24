@@ -12,16 +12,23 @@ library(caret)
 library(mvtnorm)
 library(class)
 library(e1071)
+library(usmap)
+```
 
+```{r}
 #import data
-beers <- read_csv("Beers.csv")
-breweries <- read_csv("Breweries.csv")
+beers <- read.csv(file.choose(),header = TRUE)
+breweries <- read.csv(file.choose(),header = TRUE)
 ```
 
 1. How many breweries are present in each state?
 ```{r}
 breweries %>% 
   count(State,sort=TRUE)
+
+breweries
+beers
+
 ```
 
 2. Merge Beer and Brewery Data
@@ -49,6 +56,7 @@ names(which(colSums(is.na(Beer2))>0))
 sum(is.na(Beer2$ABV))
 sum(is.na(Beer2$IBU))
 sum(is.na(Beer2$Style))
+factor(Beer2$Style)
 ```
 
 There are a few ways we could go about dealing with these; the best way to glean reliable information from any statistics related to the data would be to ignore entries with missing values for the variable(s) being examined, as using any input (like say, a mean) in place of an unknown value is very likely to misrepresent the true nature of the data.
@@ -73,6 +81,28 @@ Bar Charts of ABV and IBU
 Meds %>% ggplot(aes(x=reorder(State,Median_ABV), y=Median_ABV,fill = Meds$Median_ABV)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
 
 Meds %>% ggplot(aes(x=reorder(State,Median_IBU), y=Median_IBU,fill = Meds$Median_IBU)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+
+Meds
+Meds$fips <- fips(trimws(as.character(Meds$State)))
+
+
+med_ABV <-Meds[order(-Meds$Median_ABV),] 
+med_ABV
+med_IBU <- Meds[order(-Meds$Median_IBU),] 
+med_IBU
+
+plot_usmap(data = Meds,  values = "Median_IBU", color = "blue") + 
+    labs(title = "Median IBU by State", subtitle = "International Bitterness Units") + 
+  scale_fill_continuous(low = "white", high = "blue", name = "IBU", label = scales::comma) + theme(legend.position = "right")
+
+plot_usmap(data = Meds,  values = "Median_ABV", color = "red") + 
+    labs(title = "Median ABV by State", subtitle = "Alcohol by Volume") + 
+  scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
+
+par(mfrow=c(1,2))
+head(med_ABV, 5) %>% ggplot(aes(x = reorder(State,Median_ABV), y = Median_ABV, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+head(med_IBU, 5) %>% ggplot(aes(x = reorder(State,Median_IBU), y = Median_IBU, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+
 ```
 
 5. Find states with the highest ABV and IBU

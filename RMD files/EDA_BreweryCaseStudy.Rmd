@@ -35,13 +35,15 @@ library(ggplot2)
 ### Breweries By State
 1.   How many breweries are present in each state?
 ```{r}
+brew_raw
 brew_count_by_state <- brew_raw %>% group_by(State) %>% tally()
 brew_count_by_state$state <- trimws(as.character(brew_count_by_state$State))
 brew_count_by_state$fips <- fips(brew_count_by_state$state)
 attach(brew_count_by_state)
 brew_count_fips <- brew_count_by_state[order(fips),] 
 detach(brew_count_by_state)
-
+south_d <- brew_raw %>% filter(brew_raw$State =="SD")
+south_d
 brew_count_fips
 
 plot_usmap(data = brew_count_fips,  values = "n", color = "blue") + 
@@ -68,8 +70,10 @@ tail(beer_by_brew)
 ```{r}
 #summary(beer_by_brew)
 #ABV, IBU Just omitting for now, come back
+beer_by_brew
 beer_by_brew_clean <- na.omit(beer_by_brew)
 summary(beer_by_brew_clean)
+beer_by_brew_clean
 brew_count_by_state <- beer_by_brew_clean %>% group_by(State) %>% tally()
 summ<-brew_count_by_state
 brew_count_by_state$state <- trimws(as.character(brew_count_by_state$State))
@@ -77,6 +81,7 @@ brew_count_by_state$fips <- fips(brew_count_by_state$state)
 attach(brew_count_by_state)
 brew_count_fips <- brew_count_by_state[order(fips),] 
 detach(brew_count_by_state)
+
 ```
 
 ### ABV and IBU by State
@@ -86,6 +91,7 @@ detach(brew_count_by_state)
 #how could I bucket these for better histogram grouping?
 
 medianABVs <- as.data.frame(beer_by_brew_clean %>% group_by(State) %>% summarise( MedianABV=median(ABV* 100), MeanABV=mean(ABV* 100), MaxABV=max(ABV* 100), MinABV=min(ABV* 100), StdABV=sd(ABV* 100)))
+
 medianIBUs <- as.data.frame(beer_by_brew_clean %>% group_by(State) %>% summarise( MedianIBU=median(IBU), MeanIBU=mean(IBU), MaxIBU=max(IBU), MinIBU=min(IBU), StdIBU=sd(IBU))) 
 
 summary_ABV_IBU <- merge(medianABVs,medianIBUs,by="State")
@@ -120,22 +126,23 @@ plot_usmap(include= c("MN", "IA", "MO", "AR", "LA"), data = summary_ABV_IBU_fips
 ### Highest ABV and IBU
 5.   Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
 ```{r}
+med_ABV <-summary_ABV_IBU_fips[order(-summary_ABV_IBU_fips$MedianABV),] 
+med_IBU <- summary_ABV_IBU_fips[order(-summary_ABV_IBU_fips$MedianIBU),] 
+#asdf
 max_ABV <-summary_ABV_IBU_fips[order(-summary_ABV_IBU_fips$MaxABV),] 
-head(max_ABV, 1)
 max_IBU <- summary_ABV_IBU_fips[order(-summary_ABV_IBU_fips$MaxIBU),] 
-head(max_IBU, 1)
-max_ABV
-includePrintABV = head(max_ABV, 5)$state
-includePrintIBU = head(max_IBU, 5)$state
-includePrintABV
-includePrintIBU
-par(mfrow=c(1,2))
-head(max_ABV, 5) %>% ggplot(aes(x = state, y = MaxABV, fill=state)) +  geom_histogram(stat = "identity", position = "dodge",  aes(x = state)) +
-  labs(title = "Top 5 ABV States", subtitle = "Highest Alcohol by Volume") 
 
-head(max_IBU, 5) %>% ggplot(aes(x = state, y = MaxIBU, fill=state)) +  geom_histogram(stat = "identity", position = "dodge",  aes(x = state)) +
-  labs(title = "Top 5 IBU States", subtitle = "Highest International Bitterness Units")
+par(mfrow=c(2,2))
+head(max_ABV, 5) %>% ggplot(aes(x = reorder(state,MaxABV), y = MaxABV, fill=state)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+head(max_IBU, 5) %>% ggplot(aes(x = reorder(state,MaxIBU), y = MaxIBU, fill=state)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
 
+head(med_ABV, 5) %>% ggplot(aes(x = reorder(state,MedianABV), y = MedianABV, fill=state)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+
+head(med_IBU, 5) %>% ggplot(aes(x = reorder(state,MedianIBU), y = MedianIBU, fill=state)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+
+#fdfghjkl
+includePrintABV = head(med_ABV, 5)$state
+includePrintIBU = head(med_IBU, 5)$state
 plot_usmap(include= includePrintABV, data = summary_ABV_IBU_fips,  values = "MaxABV", color = "red") + 
     labs(title = "Top 5 ABV States", subtitle = "Mapping States with Highest Alcohol by Volume") + 
   scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
@@ -150,7 +157,7 @@ plot_usmap(include= includePrintIBU, data = summary_ABV_IBU_fips,  values = "Max
 ```{r}
 summary(summary_ABV_IBU_fips)
 
-beer_by_brew_clean %>% ggplot(aes(x = ABV, fill=State)) +  geom_histogram(stat = "count", position = "dodge",  aes(x = ABV)) +
+beer_by_brew_clean %>% ggplot(aes(x = IBU, fill=State)) +  geom_histogram(stat = "count", position = "dodge",  aes(x = IBU)) +
   labs(title = "ABV by State", subtitle = "ABV by state")
 ```
 
@@ -166,6 +173,7 @@ beer_by_brew_clean$scaledABV <- scale(beer_by_brew_clean$ABV)
 beer_by_brew_clean$scaledIBU <- scale(beer_by_brew_clean$IBU)
 par(mfrow=c(1,2))
 beer_by_brew_clean %>% ggplot(aes(x = ABV, y = IBU)) + geom_point() + stat_smooth() + ggtitle("ABV vs IBU: Not Scaled")
+beer_by_brew_clean %>% ggplot(aes(x = IBU, y = ABV)) + geom_point() + stat_smooth() + ggtitle("ABV vs IBU: Not Scaled")
 beer_by_brew_clean %>% ggplot(aes(x = scaledABV, y = scaledIBU)) + geom_point() + stat_smooth() + ggtitle("ABV vs IBU: Scaled")
 
 ```

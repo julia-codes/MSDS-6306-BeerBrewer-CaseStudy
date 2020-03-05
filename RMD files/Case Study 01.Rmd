@@ -357,7 +357,8 @@ In our review we found many beers were missing information on their IBU. This sc
 
 ## Beer Types
 ```{r}
-unique(factor(Beer2$Style))
+beertypes =unique(factor(Beer2$Style))
+beertypes[order(beertypes)]
 ```
 
 ## Median ABV

@@ -204,9 +204,14 @@ cor(x=Beer3$ABV, y=Beer3$IBU)
 
 
 
-## 8. Use KNN to investigate the difference between IPA and other Ales. (Again NAs have been removed)
+## 8. Use KNN to investigate the difference between IPA and other Ales. 
+Given the scatterplot above, we'd like to know if ther is enough of a relationship between IBU and ABV to categorize a beer as either an IPA or an Ale knowing only these two numbers.  We will use the K - Nearest Neighbors (KNN) test. This model will use K number of beers closest by distance (as you'd see on a scatterplot) to estimate what kind of beer it is. 
+
+To compare IPAs to other Ales, we broke up the beers into sets based on their beer type containing IPA or just Ale.
 
 See Appendix for [Full list of Beer Types](#beer-types)
+
+First we checked for the best K value to use to train the KNN. We split the dataset in half checking K values 1 to 80 for accuracy. For each K value we took the mean accuracy of 50 runs for comparison. 
 
 ### KNN for classifying just IPAs and Non-IPA Ales; other styles are excluded
 
@@ -246,12 +251,15 @@ for(i in 1:numks)
 }
 
 }
-
+```
+Based on the graph, you can see there is a high spike in accuracy at k=5 and it levels out after 30. Our model will use the closest 5 beers to estimate what category it should fall into. 
+```{r}
 MeanAcc = colMeans(masterAcc)
 #plot k vs accuracy and identify k with highest accuracy
-plot(seq(1,numks,1),MeanAcc, type = "l")
+plot(seq(1,numks,1),MeanAcc, type = "l", main="Accuracy of KNN model vs K value") 
 which.max(MeanAcc)
 ```
+Using a KNN model with k=5, we could categorize beers into IPAs or Non-IPA Ales with about 87% accuracy using only IBU and ABV. This indicates that on average, there is a clear enough distinction between IPAs and other Ales in their combination of ABV and IBU to be able to reasonably identify an IPA from a different Ale based on these variables alone.
 
 ```{r}
 #knn classification using the tuned value of k
@@ -263,12 +271,22 @@ classif <- knn(trainBeer[,4:5],testBeer[,4:5],trainBeer$Category, prob=TRUE, k=5
 
 confusionMatrix(table(classif,testBeer$Category))
 ```
-Using a KNN model with k=5, we could categorize beers into IPAs or Non-IPA Ales with about 87% accuracy using only IBU and ABV. This indicates that on average, there is a clear enough distinction between IPAs and other Ales in their combination of ABV and IBU to be able to reasonably identify an IPA from a different Ale based on these variables alone.
+
 
 
 ## IPA vs APA - Does it matter?
 
-We can observe visually if there appears to be distinct differences in Bitterness and ABV for the 3 largest groups among IPAs and APAs.
+With the younger generation quickly ditching ubiquitous light beers for bolder options from the craft beer market, it is time to evolve by attempting to add more inimitable options to our lineup of beer labels. The booming resurgence of craft beer brewing has fostered unbridled experimentation in pursuit of finding unique formulas that can distinguish a brewer amidst his many peers. The lines separating the classification of beer styles are becoming blurrier and the opportunity to discover a new flavor that entices the common imbiber is riper than ever.
+
+The India Pale Ale is the most prevalent and still one of the fastest growing craft beer styles in America. Of the 2400 labels in this dataset, a third of them are classified as IPA or the similar APA. If Budweiser desires to cut into the craft brew market, this is an excellent place to start.
+
+The marketing and development team for Budweiser has proposed that a new label be introduced to the Budweiser Lineup - The Bud IPA. The team wants to label the beer with IPA because of its popular namesake in the craft beer market, but is interested to know how much room for experimentation they have when it comes to IBU and ABV while still being able to keep the simple "Bud IPA" label.
+
+There are traditional differences that have culminated in industry defined standards for what makes a beer an Indian Pale Ale vs an American Pale Ale. But as IPAs, their siblings, and cousins dominate the craft beer market, many are suggesting there isn't really any difference between them anymore. Could this mean we have free reign to develop a unique brew that could fall anywhere in the range of ABV and IBU and label it as the all-encompassing "IPA"? Answering these questions could open the door to understanding just how ambitious the formulation for this new label could be.
+
+## Is there any difference Between Pale Ales?
+We can observe visually that there appears to be distinct differences in Bitterness and ABV for the 3 largest groups among IPAs and APAs.
+
 ```{r}
 # Boxplots of IBU for 3 different PAs
 # Pare down data to just 3 groups of interest
@@ -293,15 +311,19 @@ IPAtest %>%
 
 
 All of the plots show distinct separate groups for the 3 styles for both ABV and IBU. We can confirm whether or not there are any significant differences between the groups with an ANOVA.
+
 See Appendix for assumption checks to confirm ANOVA can be performed
 [IBU ANOVA Checks](#anova-ibu-checks)
 [ABV ANOVA Checks](#anova-abv-checks)
+
+### ANOVA on IBU for the 3 groups 
 ```{r}
 #Run ANOVA on IBU for the 3 groups 
 IPAtest_IBU <- aov(IBU ~ Style, data=IPAtest)
 summary(IPAtest_IBU)
 ```
 
+### ANOVA on ABV for the 3 groups
 ```{r}
 #Run ANOVA on ABV for the 3 groups 
 IPAtest_ABV <- aov(ABV ~ Style, data=IPAtest)
@@ -310,21 +332,26 @@ summary(IPAtest_ABV)
 
 The F statistics and corresponding small p values confirm that there is significant evidence of a difference between the different groups for both IBU and ABV.
 
-Which groups are different?
+## Which groups are different?
 
-we ran hypothesis test on all combinations, and the p-value to account for family wise error
-The p value is so low, it shows as 0, they are all diff from 
+We ran hypothesis test on all combinations using Tukey-Kramer. These tests provide overwhelming evidence (p values are essentially zero) of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset if they want to avoid looking foolish using the "IPA" label.
+
+### Tukey-Kramer IBU
 ```{r}
 #Tukey-Kramer adjusted confidence intervals for IBU differences between groups
 TukeyHSD(IPAtest_IBU)
 ```
 
+### Tukey-Kramer ABV
 ```{r}
 #Tukey-Kramer adjusted confidence intervals for ABV differences between groups
 TukeyHSD(IPAtest_ABV)
 ```
 
-These tests provide overwhelming evidence (p values are essentially zero) of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset if they want to avoid looking foolish using the "IPA" label.
+# Conclusion
+These tests provide overwhelming evidence of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-70 to be within the range of 50% of American IPA’s on market. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
+
+In our review we found many beers were missing information on their IBU. This scale is not as widespread in America as it is in other countries. When Adolphus Busch started Budweiser, he was looking to make Americans love beer. Now Budweiser could bring this distinct flavor to a broader audience. Inviting them to fall in love with the American IPA.
 
 # Appendix
 

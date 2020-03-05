@@ -1,6 +1,6 @@
 ---
-title: "Case Study 1"
-author: "jeysenbach"
+title: "American Brewery Study for Budweiser"
+author: "Josh Eeeysenbach and Julia Layne"
 date: "2/17/2020"
 output: html_document
 ---
@@ -43,16 +43,15 @@ beers <- read.csv("Beers.csv",header = TRUE)
 breweries <- read.csv("Breweries.csv",header = TRUE)
 ```
 
-# 1. How many breweries are present in each state?
-## Brewery Counts by State
+## 1. How many breweries are present in each state?
+### Brewery Counts by State
 Here we are taking the brewery dataset and sorting by the state abbreviation. We have sorted it for easier readability and comparison starting with state with most breweries: Colorado. Every state is represented by at least one brewery in this list as well as the Distric of Columbia.
 
 ```{r}
-breweries %>% 
-  count(State,sort=TRUE)
+print(breweries %>% count(State,sort=TRUE), n = 51)
 ```
 
-## Brewery Count on United States Map
+### Brewery Count on United States Map
 Additionally, here are those state counts displayed in map format to see concentrations of breweries to coastal regions: Pacific, Atlantic, and the great lakes. Colorado and Texas really stand out in the central region.
 ```{r}
 brew_count_by_state <- breweries %>% group_by(State) %>% tally()
@@ -274,7 +273,7 @@ confusionMatrix(table(classif,testBeer$Category))
 
 
 
-## IPA vs APA - Does it matter?
+# IPA vs APA - Does it matter?
 
 With the younger generation quickly ditching ubiquitous light beers for bolder options from the craft beer market, it is time to evolve by attempting to add more inimitable options to our lineup of beer labels. The booming resurgence of craft beer brewing has fostered unbridled experimentation in pursuit of finding unique formulas that can distinguish a brewer amidst his many peers. The lines separating the classification of beer styles are becoming blurrier and the opportunity to discover a new flavor that entices the common imbiber is riper than ever.
 
@@ -352,6 +351,7 @@ TukeyHSD(IPAtest_ABV)
 These tests provide overwhelming evidence of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-70 to be within the range of 50% of American IPA’s on market. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
 
 In our review we found many beers were missing information on their IBU. This scale is not as widespread in America as it is in other countries. When Adolphus Busch started Budweiser, he was looking to make Americans love beer. Now Budweiser could bring this distinct flavor to a broader audience. Inviting them to fall in love with the American IPA.
+
 
 # Appendix
 

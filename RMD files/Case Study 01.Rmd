@@ -1,6 +1,6 @@
 ---
 title: "American Brewery Study for Budweiser"
-author: "Josh Eeeysenbach and Julia Layne"
+author: "Josh Eysenbach and Julia Layne"
 date: "2/17/2020"
 output: html_document
 ---
@@ -329,28 +329,28 @@ IPAtest_ABV <- aov(ABV ~ Style, data=IPAtest)
 summary(IPAtest_ABV)
 ```
 
-The F statistics and corresponding small p values confirm that there is significant evidence of a difference between the different groups for both IBU and ABV.
+The F statistics and corresponding small p values confirm that there is significant evidence of at least one difference between the different groups for both IBU and ABV.
 
 ## Which groups are different?
 
-We ran hypothesis test on all combinations using Tukey-Kramer. These tests provide overwhelming evidence (p values are essentially zero) of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset if they want to avoid looking foolish using the "IPA" label.
+To check which of three styles were different from each other, we ran hypothesis tests on the three combinations using Tukey-Kramer adjusted p-values.
 
 ### Tukey-Kramer IBU
 ```{r}
-#Tukey-Kramer adjusted confidence intervals for IBU differences between groups
+#Tukey-Kramer adjusted p values and confidence intervals for IBU differences between groups
 TukeyHSD(IPAtest_IBU)
 ```
 
 ### Tukey-Kramer ABV
 ```{r}
-#Tukey-Kramer adjusted confidence intervals for ABV differences between groups
+#Tukey-Kramer adjusted p values and confidence intervals for ABV differences between groups
 TukeyHSD(IPAtest_ABV)
 ```
 
 # Conclusion
-These tests provide overwhelming evidence of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-70 to be within the range of 50% of American IPA’s on market. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
+These tests provide overwhelming evidence (p values are essentially zero) of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-70 to be within the range of 50% of American IPA’s on market. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
 
-In our review we found many beers were missing information on their IBU. This scale is not as widespread in America as it is in other countries. When Adolphus Busch started Budweiser, he was looking to make Americans love beer. Now Budweiser could bring this distinct flavor to a broader audience. Inviting them to fall in love with the American IPA.
+In our review we found many beers were missing information on their IBU. This scale is not as widespread in America as it is in other countries. When Adolphus Busch started Budweiser, he was looking to make Americans love beer. Now Budweiser could bring this distinct flavor to a broader audience by inviting them to fall in love with the American IPA.
 
 
 # Appendix

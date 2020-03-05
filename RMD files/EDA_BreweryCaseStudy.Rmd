@@ -150,6 +150,11 @@ plot_usmap(include= includePrintABV, data = summary_ABV_IBU_fips,  values = "Max
 plot_usmap(include= includePrintIBU, data = summary_ABV_IBU_fips,  values = "MaxIBU", color = "red") + 
     labs(title = "Top 5 IBU States", subtitle = "Mapping States with Highest International Bitterness Units") + 
   scale_fill_continuous(low = "white", high = "red", name = "IBU", label = scales::comma) + theme(legend.position = "right")
+
+
+par(mfrow=c(1,2))
+head(med_ABV, 5) %>% ggplot(aes(x = reorder(State,Median_ABV), y = Median_ABV, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+head(med_IBU, 5) %>% ggplot(aes(x = reorder(State,Median_IBU), y = Median_IBU, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
 ```
 
 ### Summary Statistics
@@ -184,6 +189,9 @@ beer_by_brew_clean %>% ggplot(aes(x = scaledABV, y = scaledIBU)) + geom_point() 
 In addition, while you have decided to use KNN to investigate this relationship (KNN is required) you may also feel free to supplement your response to this question with any other methods or techniques you have learned.  Creativity and alternative solutions are always encouraged.  
 
 9. Knock their socks off!  Find one other useful inference from the data that you feel Budweiser may be able to find value in.  You must convince them why it is important and back up your conviction with appropriate statistical evidence. 
+
+
+
 
 
 

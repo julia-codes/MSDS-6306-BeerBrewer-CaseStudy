@@ -5,6 +5,24 @@ date: "2/17/2020"
 output: html_document
 ---
 
+
+# Introduction
+## A New Beer label; IPA vs APA - Does it matter?
+Based on your interest in creating a new beer label. We've evaluated over 2400 labels in this dataset, a third of them are classified as IPA or the similar APA. If Budweiser desires to cut into the craft brew market, this is an excellent place to start.
+
+These tests provide overwhelming evidence of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-70 to be within the range of 50% of American IPA’s on market. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
+
+In our review we found many beers were missing information on their IBU. This scale is not as widespread in America as it is in Germany, where beer below 20 IBU is considered fraudulently labeled. When Adolphus Busch started Budweiser, he was looking to make Americans love beer. Now Budweiser could bring this distinct flavor to a broader audience. Inviting them to fall in love with the American IPA.
+
+##"It is my aim to win the American people over ... to make them all lovers of beer." - Adolphus Busch (1905)
+
+
+# Questions
+Here are the specific questions you requested, above each you will find a brief explanation of the code contained to generate the data.
+
+## Initial Setup
+### Libraries
+These are the r libraries we used to evaluate the brewery and beer datasets
 ```{r, warning=FALSE, message=FALSE}
 library(tidyverse)
 library(ggthemes)
@@ -15,23 +33,43 @@ library(e1071)
 library(usmap)
 ```
 
+## Import Files
+Included with this evaluation are the provided CSVs of Beer and Brewery data. Please leave them in the same folder when running this file.
+
+See Appendix for [Raw Datasets](#raw-datasets)
 ```{r}
 #import data
-beers <- read.csv(file.choose(),header = TRUE)
-breweries <- read.csv(file.choose(),header = TRUE)
+beers <- read.csv("Beers.csv",header = TRUE)
+breweries <- read.csv("Breweries.csv",header = TRUE)
 ```
 
-1. How many breweries are present in each state?
+#1. How many breweries are present in each state?
+## Brewery Counts by State
+Here we are taking the brewery dataset and sorting by the state abbreviation. We have sorted it for easier readability and comparison starting with state with most breweries: Colorado. Every state is represented by at least one brewery in this list as well as the Distric of Columbia.
+
 ```{r}
 breweries %>% 
   count(State,sort=TRUE)
-
-breweries
-beers
-
 ```
 
-2. Merge Beer and Brewery Data
+## Brewery Count on United States Map
+Additionally, here are those state counts displayed in map format to see concentrations of breweries to coastal regions: Pacific, Atlantic, and the great lakes. Colorado and Texas really stand out in the central region.
+```{r}
+brew_count_by_state <- breweries %>% group_by(State) %>% tally()
+brew_count_by_state$state <- trimws(as.character(brew_count_by_state$State))
+brew_count_by_state$fips <- fips(brew_count_by_state$state)
+attach(brew_count_by_state)
+brew_count_fips <- brew_count_by_state[order(fips),] 
+detach(brew_count_by_state)
+
+plot_usmap(data = brew_count_fips,  values = "n", color = "blue") + 
+    labs(title = "Breweries by State", subtitle = "Count of Breweries per state") + 
+  scale_fill_continuous(low = "white", high = "blue", name = "Breweries by State", label = scales::comma) + theme(legend.position = "right")
+```
+
+
+## 2. Merge Beer and Brewery Data
+To bring these two datasets together we have joined them on the brewery's id. The Name columns of each were transformed to Brewery_Name and Beer_Name for better readability. Below are the first and last 6 beers from the joined datasets. 
 ```{r}
 #Merge the datasets
 Beer2 <- merge(beers, breweries, by.x = "Brewery_id", by.y = "Brew_ID")
@@ -46,26 +84,34 @@ head(Beer2, 6)
 tail(Beer2, 6)
 ```
 
-3. Address Missing Values
+## 3. Address Missing Values
+There are a few ways we could go about dealing with these; the best way to glean reliable information from any statistics related to the data would be to ignore entries with missing values for the variable(s) being examined, as using any input (like say, a mean) in place of an unknown value is very likely to misrepresent the true nature of the data.
+
+In this case, IBU is a good example of the potential perils of trying to impute missing values because it varies greatly between beers regardless of style. The IBU measurement is going to be impacted heavily by the flavor/taste a brewer is going for, and breweries have little practical interest in producing beers that aren't distinguishably different than those they already have, especially if they will produce multiple iterations of a certain style. The best course of action is probably to exclude beers missing the IBU value when examining IBU despite the misfortune that this excludes over 1000 beers (40% of the beers).
+
+For similar reasons, beers missing ABV should also be excluded from analyses involving ABV. There is less reason for concern with these exclusions due to the relatively small number of beers missing this information.
+
+### Columns with missing Values
 ```{r}
 #Find out which columns have missing values
 names(which(colSums(is.na(Beer2))>0))
 ```
+### Counts of Missing Values
 ```{r}
 #Count the missing values in each column
-sum(is.na(Beer2$ABV))
-sum(is.na(Beer2$IBU))
-sum(is.na(Beer2$Style))
-factor(Beer2$Style)
+print(paste('ABV Missing - ',sum(is.na(Beer2$ABV))))
+print(paste('IBU Missing - ', sum(is.na(Beer2$IBU))))
+print(paste('Style Missing - ', sum(is.na(Beer2$Style))))
 ```
 
-There are a few ways we could go about dealing with these; the best way to glean reliable information from any statistics related to the data would be to ignore entries with missing values for the variable(s) being examined, as using any input (like say, a mean) in place of an unknown value is very likely to misrepresent the true nature of the data.
 
-In this case, IBU is a good example of the potential perils of trying to impute missing values because it varies greatly between beers regardless of style. The IBU measurement is going to be impacted heavily by the flavor/taste a brewer is going for, and breweries have little practical interest in producing beers that aren't distinguishably different than those they already have, especially if they will produce multiple iterations of a certain style. The best course of action is probably to exclude beers missing the IBU value when examining IBU despite the misfortune that this excludes over 1000 beers.
+## 4. Compute the median alcohol content and international bitterness unit for each state. Plot a bar chart to compare.
+We took the median ABV and IBU per state, removing respective missing values.
 
-For similar reasons, beers missing ABV should also be excluded from analyses involving ABV. There is less reason for concern with these exclusions due to the relatively small number of beers missing this information.
+See Appendix for full ordered lists of
+[Median ABV](#median-abv)
+[Median IBU](#median-ibu)
 
-4. Calculate Mean ABV and IBU for each state
 ```{r}
 Meds <- Beer2 %>% 
   group_by(State) %>% 
@@ -73,47 +119,41 @@ Meds <- Beer2 %>%
     Median_ABV = median(ABV, na.rm = TRUE), 
     Median_IBU = median(IBU, na.rm = TRUE)
   )
-Meds
 ```
 
-Bar Charts of ABV and IBU
+### Bar Charts of ABV and IBU
 ```{r}
 Meds %>% ggplot(aes(x=reorder(State,Median_ABV), y=Median_ABV,fill = Meds$Median_ABV)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
 
 Meds %>% ggplot(aes(x=reorder(State,Median_IBU), y=Median_IBU,fill = Meds$Median_IBU)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
+```
 
-Meds
+```{r}
+
 Meds$fips <- fips(trimws(as.character(Meds$State)))
-
-
-
 
 plot_usmap(data = Meds,  values = "Median_IBU", color = "blue") + 
     labs(title = "Median IBU by State", subtitle = "International Bitterness Units") + 
   scale_fill_continuous(low = "white", high = "blue", name = "IBU", label = scales::comma) + theme(legend.position = "right")
 
-plot_usmap(data = Meds,  values = "Median_ABV", color = "red") + 
+plot_usmap(data = Meds,  values = "Median_ABV", color = "blue") + 
     labs(title = "Median ABV by State", subtitle = "Alcohol by Volume") + 
-  scale_fill_continuous(low = "white", high = "red", name = "ABV", label = scales::comma) + theme(legend.position = "right")
-
-med_ABV <-Meds[order(-Meds$Median_ABV),] 
-med_ABV
-med_IBU <- Meds[order(-Meds$Median_IBU),] 
-med_IBU
-par(mfrow=c(1,2))
-head(med_ABV, 5) %>% ggplot(aes(x = reorder(State,Median_ABV), y = Median_ABV, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median ABV by State") + xlab("State") + ylab("Median ABV") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
-head(med_IBU, 5) %>% ggplot(aes(x = reorder(State,Median_IBU), y = Median_IBU, fill=State)) + scale_colour_gradient()+ geom_col(show.legend = FALSE) + ggtitle("Top 5 Median IBU by State") + xlab("State") + ylab("Median IBU") + theme(axis.text.x = element_text(angle=90, size=8, vjust = .5))
-
+  scale_fill_continuous(low = "white", high = "blue", name = "ABV", label = scales::comma) + theme(legend.position = "right")
 ```
 
-5. Find states with the highest ABV and IBU
+## 5.   Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
 ```{r}
 #States with the highest median ABV
-Meds$`State`[which(Meds$Median_ABV==max(Meds$Median_ABV, na.rm = TRUE))]
-
+maxMedABV = max(Meds$Median_ABV, na.rm = TRUE)
+topMedABV = Meds$`State`[which(Meds$Median_ABV==maxMedABV)]
+  paste('States with the highest median ABV (tie): ', topMedABV, ' - ', maxMedABV[1], 'ABV')
+  
 #States with the highest median IBU
-Meds$`State`[which(Meds$Median_IBU==max(Meds$Median_IBU, na.rm = TRUE))]
-
+  
+maxMedIBU = max(Meds$Median_IBU, na.rm = TRUE)
+topMedIBU = Meds$`State`[which(Meds$Median_IBU== maxMedIBU)]
+  paste('States with the highest median IBU: ', topMedIBU[1], ' - ', maxMedIBU, 'IBU')
+  
 #State in which the beer with the single highest ABV resides
 Beer2$`State`[which(Beer2$ABV==max(Beer2$ABV, na.rm = TRUE))]
 
@@ -148,7 +188,10 @@ cor(x=Beer3$ABV, y=Beer3$IBU)
 
 Based on a scatter plot of ABV vs IBU, there does appear to be evidence of a moderate positive correlation. The ABV looks like it trends upward as IBU increases. The calculated correlation coefficient of .67 supports this. 
 
+## IPA vs APA - Does it matter?
 8. Use KNN to investigate the difference between IPA and other Ales. (Again NAs have been removed)
+
+See Appendix for [Full list of Beer Types](#beer-types)
 
 ***(First Try - KNN for classifying just IPAs and Non-IPA Ales; other styles are excluded)
 
@@ -269,4 +312,32 @@ Using a KNN model with k=36, we could categorize beers into IPAs, Non-IPA Ales, 
 
 
 
+# Appendix
 
+## Beer Types
+```{r}
+factor(Beer2$Style)
+
+```
+
+## Median ABV
+### In order of Highest to Lowest ABVs
+```{r}
+med_ABV <-Meds[order(-Meds$Median_ABV),] 
+med_ABV
+```
+
+## Median IBU
+### In order of Highest to Lowest IBUs
+```{}
+
+med_IBU <- Meds[order(-Meds$Median_IBU),] 
+med_IBU
+```
+
+## Raw Datasets
+### An opportunity to look through the raw dataset
+```{r}
+breweries
+beers
+```

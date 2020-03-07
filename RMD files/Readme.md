@@ -1,3 +1,5 @@
+# RMD in Markdown Form
+
 ---
 title: "American Brewery Study for Budweiser"
 author: "Josh Eysenbach and Julia Layne"

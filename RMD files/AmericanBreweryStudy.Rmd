@@ -272,6 +272,13 @@ classif <- knn(trainBeer[,4:5],testBeer[,4:5],trainBeer$Category, prob=TRUE, k=5
 confusionMatrix(table(classif,testBeer$Category))
 ```
 
+### Plotting IPAs vs other Ales
+
+```{r}
+Beer4 %>%
+  ggplot(aes(x = IBU, y=ABV, color=Category)) + geom_point() + ggtitle("ABU vs. ABV for IPAs and Other Ales") +theme_stata()
+```
+
 # IPA vs APA - Does it matter?
 
 With the younger generation quickly ditching ubiquitous light beers for bolder options from the craft beer market, it is time to evolve by attempting to add more inimitable options to our lineup of beer labels. The booming resurgence of craft beer brewing has fostered unbridled experimentation in pursuit of finding unique formulas that can distinguish a brewer amidst his many peers. The lines separating the classification of beer styles are becoming blurrier and the opportunity to discover a new flavor that entices the common imbiber is riper than ever.

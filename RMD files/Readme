@@ -1,4 +1,0 @@
-# R Markdown Files for Case Study 
-## RMD files
-The raw markdown is AmericanBreweryStudy.rmd, with a knit version of the project in AmericanBreweryStudy.html
-The Beers.csv and Breweries.csv need to be in the same folder as the R markdown when run.

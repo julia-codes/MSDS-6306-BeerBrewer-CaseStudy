@@ -9,7 +9,11 @@ The Beers.csv and Breweries.csv need to be in the same folder as the R markdown 
 
 
 # Powerpoint
-## Powerpoint
+## Josh Eysenbach
+
+## Julia Layne
+* American Brewery Case Study - Julia Layne.ppt
+* American Brewery Case Study - Julia Layne.pdf
 
 # You Tube Presentations
 

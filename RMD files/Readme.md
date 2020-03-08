@@ -12,12 +12,14 @@ output: html_document
 ## A New Beer label; IPA vs APA - Does it matter?
 Based on your interest in creating a new beer label. We've evaluated over 2400 labels in this dataset, a third of them are classified as IPA or the similar APA. If Budweiser desires to cut into the craft brew market, this is an excellent place to start.
 
-These tests provide overwhelming evidence of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-70 to be within the range of 50% of American IPA’s on market. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
+We will show that there is a statewide differences in median IBUs while ABVs are relatively close. We determined there relationship between ABV and IBUs and these can be used to categorize beer style. Finally, there are distinct differences in ABV and IBU between Standard American IPA's, Double IPA's, and APA's.
 
-In our review we found many beers were missing information on their IBU. This scale is not as widespread in America as it is in Germany, where beer below 20 IBU is considered fraudulently labeled. When Adolphus Busch started Budweiser, he was looking to make Americans love beer. Now Budweiser could bring this distinct flavor to a broader audience. Inviting them to fall in love with the American IPA.
+Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-75  to be within the range of 50% of American IPA’s on market. IPAs tend to be on the higher alcohol content, but there are ABVs within the American IPA range and the overall middle 50% of ABVs of 6.2% to 6.7%. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
 
-## "It is my aim to win the American people over ... to make them all lovers of beer." - Adolphus Busch (1905)
+In our review we found many beers were missing information on their IBU. This scale is not as widespread in America as it is in other countries. When Adolphus Busch started Budweiser, he was looking to make Americans love beer. Now Budweiser could bring this distinct flavor to a broader audience by inviting them to fall in love with the American IPA.
 
+### "It is my aim to win the American people over ... to make them all lovers of beer." - Adolphus Busch (1905)
+[Referenced From Budweiser's Website](https://www.budweiser.com/en/our-legacy.html)
 
 # Questions
 Here are the specific questions you requested, above each you will find a brief explanation of the code contained to generate the data.
@@ -257,7 +259,7 @@ Based on the graph, you can see there is a high spike in accuracy at k=5 and it 
 ```{r}
 MeanAcc = colMeans(masterAcc)
 #plot k vs accuracy and identify k with highest accuracy
-plot(seq(1,numks,1),MeanAcc, type = "l", main="Accuracy of KNN model vs K value") 
+plot(seq(1,numks,1),MeanAcc, type = "l", main="Accuracy of KNN model vs K value")
 paste("Highest Accuraccy K Value is ", which.max(MeanAcc))
 ```
 
@@ -272,6 +274,13 @@ testBeer = Beer4[-trainIndices,]
 classif <- knn(trainBeer[,4:5],testBeer[,4:5],trainBeer$Category, prob=TRUE, k=5)
 
 confusionMatrix(table(classif,testBeer$Category))
+```
+
+### Plotting IPAs vs other Ales
+
+```{r}
+Beer4 %>%
+  ggplot(aes(x = IBU, y=ABV, color=Category)) + geom_point() + ggtitle("IBU vs. ABV for IPAs and Other Ales") +theme_stata()
 ```
 
 # IPA vs APA - Does it matter?
@@ -348,7 +357,7 @@ TukeyHSD(IPAtest_ABV)
 
 # Conclusion
 
-These tests provide overwhelming evidence (p values are essentially zero) of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-75  to be within the range of 50% of American IPA’s on market. IPAs tend to be on the higher alcohol content, but there are ABVs within the American IPA range and the overall middle 50% of ABVs. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
+These tests provide overwhelming evidence (p values are essentially zero) of distinct differences in IBU and ABV between Standard American IPA's, Double IPA's, and APA's. Based on this information, it would be prudent for Budweiser's brewers to stick to the range for American IPA's shown in this dataset of an IBU between  60-75  to be within the range of 50% of American IPA’s on market. IPAs tend to be on the higher alcohol content, but there are ABVs within the American IPA range and the overall middle 50% of ABVs of 6.2% to 6.7%. Staying within this range will keep it distinct from the American Pale Ales while not straying far from the drinkability people look for in Budweiser.
 
 ```{r}
 print("American IPA beer Middle 50% distribution of IBU")

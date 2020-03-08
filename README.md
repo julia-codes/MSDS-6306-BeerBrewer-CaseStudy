@@ -18,7 +18,7 @@ The Beers.csv and Breweries.csv need to be in the same folder as the R markdown 
 
 # You Tube Presentations
 ## Josh Eysenbach 
-[Josh Eysenbach's Youtube Presentation](https://www.youtube.com/watch?v=TtA6nAEoXpk)
+[Josh Eysenbach's Youtube Presentation](https://www.youtube.com/watch?v=cHxLDYk09Ts)
 
 ## Julia Layne
 [Julia Layne's Youtube Presentation](https://www.youtube.com/)
